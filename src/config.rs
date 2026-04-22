@@ -5,9 +5,7 @@
 //! let config = Logging::new();
 //! ```
 //! 
-use std::fs::File;
-use std::io::Write;
-
+//use std::io::{Error};
 pub enum LogLevel {
     Debug,
     Info,
@@ -37,9 +35,9 @@ pub enum LogOutput {
 
 // Making the struct pub isn't enough. You have to expicitly make all fields public
 pub struct Logging {
-    pub enabled: bool,
-    pub level: LogLevel,
-    pub destination: LogOutput,   
+    enabled: bool,
+    level: LogLevel,
+    destination: LogOutput,   
 }
 
 impl Logging {
@@ -51,9 +49,38 @@ impl Logging {
         }
     }
 
-    pub fn test_file(f: &str) -> std::io::Result<()> {
-        // I can't use File::create_new() because this uses Rust 2021
-        let file = File::options().read(true).write(true).create_new(true).open(f)?;
+    pub fn set_enabled(&mut self, e: bool) -> Result<(), String> {
+        self.enabled = e;
+        Ok(())
+    }
+
+    pub fn set_level(&mut self, l: LogLevel) -> Result<(), String> {
+        self.level = l;
+        Ok(())
+    }
+
+    pub fn set_destination(&mut self, output: LogOutput) -> Result<(), std::io::Error> {
+        match output {
+            LogOutput::Stdout => { 
+                self.destination = LogOutput::Stdout; 
+                Ok(()) },
+            LogOutput::Stderr => { 
+                self.destination = LogOutput::Stderr; 
+                Ok(()) },
+            LogOutput::File(s) => {
+                match Logging::create_log_file(&s) {
+                    Ok(_) => { 
+                        self.destination = LogOutput::File(s);
+                        Ok(()) },
+                    Err(e) => Err(e),
+                }
+            }
+        }
+    }
+
+    fn create_log_file(s: &str) -> Result<(), std::io::Error> {
+        use std::fs::File;
+        File::create_new(s)?;
         Ok(())
     }
 }
