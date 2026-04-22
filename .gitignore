@@ -1,4 +1,4 @@
 /target
 /Cargo.lock
-/config-testing.log
+/tests/config-testing.log
 /src/main.rs
