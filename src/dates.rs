@@ -2,7 +2,7 @@
 //! # Example: 
 //! ```
 //! use cli_utils::dates;
-//! let date = Date::new(day: 01, month: 02, year: 1970, format: US);
+//! let date = Date::new("01", "02", "1970", "US");
 //! ```
 use std::fmt;
 
@@ -53,17 +53,41 @@ impl fmt::Display for DateError {
     }
 }
 
+impl fmt::Display for Month {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Month::January => write!(f, "January"),
+            Month::February => write!(f, "February"),
+            Month::March => write!(f, "March"),
+            Month::April => write!(f, "April"),
+            Month::May => write!(f, "May"),
+            Month::June => write!(f, "June"),
+            Month::July => write!(f, "July"),
+            Month::August => write!(f, "August"),
+            Month::September => write!(f, "September"),
+            Month::October => write!(f, "October"),
+            Month::November => write!(f, "November"),
+            Month::December => write!(f, "December"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Date {
     day: u8,
     month_alpha: Option<Month>,
     month_num: Option<String>,
     year: u32,
-    format: DateFormat,
+    leap_year: bool,
 }
 
 impl Date {
-    pub fn format_us_numberical(date: Date) -> String {
+    pub fn format(date: &Date, format: &str) -> Result<String, DateError> {
+        let fmt = match Date::validate_format(format) {
+            Ok(f) => f,
+            Err(e) => return Err(e),
+        };
+
         let mut day = String::new();
         if date.day < 10 {
             day = format!("0{}", date.day);
@@ -71,40 +95,46 @@ impl Date {
             day = date.day.to_string();
         }
 
-        let month = date.month_num.unwrap();
+        let month = date.month_num.clone().unwrap();
         let year = date.year;
-        let d = format!("{month}-{day}-{year}");
         
-        d
+        let d = match fmt {
+            DateFormat::US => format!("{month}-{day}-{year}"),
+            DateFormat::UK => format!("{day}-{month}-{year}"),
+            DateFormat::ISO => format!("{year}-{month}-{day}"),
+        };
+        
+        Ok(d)
     }
 
-    pub fn new(day: String, month: String, year: String, format: String) -> Result<Self, DateError> {
-        let day_tmp = match Date::validate_day(&day) {
+    pub fn new(day: &str, month: &str, year: &str) -> Result<Self, DateError> {
+        let day_tmp = match Date::validate_day(day) {
             Ok(d) => d,
             Err(e) => return Err(e),
         };
 
-        let month_tmp = match Date::validate_month(&month) {
+        let month_tmp = match Date::validate_month(month) {
             Ok((num, alpha)) => (num, alpha),
             Err(e) => return Err(e),
         };
 
-        let year_tmp = match Date::validte_year(&year) {
-            Ok(y) => y,
+        let year_tmp = match Date::validte_year(year) {
+            Ok((y, l)) => (y, l), 
             Err(e) => return Err(e),
         };
 
-        let format_tmp = match Date::validate_format(&format) {
-            Ok(f) => f,
-            Err(e) => return Err(DateError::InvalidFormat("Date format must be US, UK or ISO.".to_string())),
-        };
+        // I'll need this in the function to print the date, but not here.
+        // let format_tmp = match Date::validate_format(&format) {
+        //     Ok(f) => f,
+        //     Err(e) => return Err(DateError::InvalidFormat("Date format must be US, UK or ISO.".to_string())),
+        // };
 
         let date = Self {
             day: day_tmp,
             month_num: month_tmp.0,
             month_alpha: month_tmp.1,
-            year: year_tmp,
-            format: format_tmp,
+            year: year_tmp.0,
+            leap_year: year_tmp.1,
         };
 
         Ok(date)
@@ -114,7 +144,7 @@ impl Date {
 
     // }
 
-    fn validate_day(day: &String) -> Result<u8, DateError> {
+    fn validate_day(day: &str) -> Result<u8, DateError> {
         let day_int:u8 = match day.parse() {
             Ok(num) => num,
             Err(e) => return Err(DateError::DayWrongFormat(e.to_string())),
@@ -128,7 +158,7 @@ impl Date {
 
     }
 
-    fn validate_month(m: &String) -> Result<(Option<String>, Option<Month>), DateError> {
+    fn validate_month(m: &str) -> Result<(Option<String>, Option<Month>), DateError> {
         let month_int:u8 = match m.parse() {
             Ok(num) => num,
             Err(e) => return Err(DateError::MonthWrongFormat(e.to_string())),
@@ -152,7 +182,7 @@ impl Date {
 
     }
 
-    fn validte_year(y: &String) -> Result<u32, DateError> {
+    fn validte_year(y: &str) -> Result<(u32, bool), DateError> {
         let year_tmp: u32 = match y.parse() {
             Ok(num) => num,
             Err(e) => return Err(DateError::YearWrongFormat(e.to_string())),
@@ -162,11 +192,22 @@ impl Date {
             return Err(DateError::YearOutofRange("Year must be between 1582 and 9999.".to_string()));
         };
 
-        Ok(year_tmp)
+        let leap_year = Date::leap_year(&year_tmp);
+
+        Ok((year_tmp, leap_year))
     }
 
-    fn validate_format(f: &String) -> Result<DateFormat, DateError> {
-        let date_format = match f.as_str() {
+    pub fn leap_year(y: &u32) -> bool {
+        let mut leap_year = false;
+        if (y % 100 == 0 && y % 400 == 0) || y % 4 == 0 {
+            leap_year = true;
+        } 
+
+        leap_year
+    }
+
+    fn validate_format(f: &str) -> Result<DateFormat, DateError> {
+        let date_format = match f {
             "US" => DateFormat::US,
             "UK" => DateFormat::UK,
             "ISO" => DateFormat::ISO,
@@ -175,4 +216,33 @@ impl Date {
 
         Ok(date_format)
     }
+
+    pub fn get_year(&self) -> u32 {
+        self.year
+    }
+
+    pub fn get_month_n(&self) -> String {
+        let month: String = self.month_num.clone().unwrap();
+        month
+    }
+
+    pub fn get_month_a(&self) -> String {
+        let month: String = match &self.month_alpha {
+            Some(m) => m.to_string(),
+            None => panic!("Something went wrong!"),
+        };
+        month
+    }
+
+    pub fn get_day(&self) -> String {
+        let mut day: String = String::new();
+        if self.day < 10 {
+            day = format!("0{}", self.day.to_string());
+        } else {
+            day = self.day.to_string();
+        };
+
+        day
+    }
+
 }
