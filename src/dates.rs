@@ -1,8 +1,12 @@
 //! This is a library for interactiving with dates
 //! # Example: 
 //! ```
-//! use cli_utils::dates;
-//! let date = Date::new("01", "02", "1970", "US");
+//! use cli_utils::dates::Date;
+//! let date = match Date::new("01", "02", "1900") {
+//!                 Ok(d) => d,
+//!                 Err(e) => panic!("Error constructing date: {}", e),
+//!             };
+//! println!("{}", &date);
 //! ```
 use std::fmt;
 
@@ -13,7 +17,7 @@ pub enum DateFormat {
     ISO,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Month {
     January,
     February,
@@ -43,7 +47,7 @@ impl fmt::Display for DateError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             DateError::MonthOutOfRange(s) => write!(f, "MonthOutOfRange: {}", s),
-            DateError::MonthWrongFormat(s) => write!(f, "MonthWroteFormat: {}", s),
+            DateError::MonthWrongFormat(s) => write!(f, "MonthWrongFormat: {}", s),
             DateError::DayOutOfRange(s) => write!(f, "DayOutOfRange: {}", s),
             DateError::DayWrongFormat(s) => write!(f, "DayWrongFormat: {}", s),
             DateError::YearOutofRange(s) => write!(f, "YearOutofRange: {}", s),
@@ -80,6 +84,34 @@ pub struct Date {
     year: u32,
     leap_year: bool,
 }
+
+impl fmt::Display for Date {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Date | day: {}, month (#): {}, month (name): {}, year: {}, leap_year: {}", 
+            self.day, 
+            self.month_num.clone().unwrap(), 
+            self.month_alpha.unwrap(), 
+            self.year, 
+            self.leap_year)
+    }
+}
+
+// impl PartialEq for Date {
+//     fn eq(&self, other: &Self) -> bool {
+//         let mut result = true;
+//         if self.day != other.day ||
+//            self.month_alpha != other.month_alpha ||
+//            self.month_num != other.month_num ||
+//            self.year != other.year ||
+//            self.leap_year != other.leap_year {
+//                 result = false
+//         }
+        
+//         result
+//     }
+// }
+
+// impl Eq for Date {}
 
 impl Date {
     pub fn format(date: &Date, format: &str) -> Result<String, DateError> {
@@ -122,12 +154,6 @@ impl Date {
             Ok((y, l)) => (y, l), 
             Err(e) => return Err(e),
         };
-
-        // I'll need this in the function to print the date, but not here.
-        // let format_tmp = match Date::validate_format(&format) {
-        //     Ok(f) => f,
-        //     Err(e) => return Err(DateError::InvalidFormat("Date format must be US, UK or ISO.".to_string())),
-        // };
 
         let date = Self {
             day: day_tmp,
@@ -199,9 +225,12 @@ impl Date {
 
     pub fn leap_year(y: &u32) -> bool {
         let mut leap_year = false;
-        if (y % 100 == 0 && y % 400 == 0) || y % 4 == 0 {
+        if y % 4 == 0 {
             leap_year = true;
-        } 
+            if y % 100 == 0 && y % 400 != 0 {
+                leap_year = false;
+            }
+        }
 
         leap_year
     }
@@ -243,6 +272,10 @@ impl Date {
         };
 
         day
+    }
+
+    pub fn get_leap_year(&self) -> bool {
+        self.leap_year
     }
 
 }

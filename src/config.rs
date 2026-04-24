@@ -30,7 +30,10 @@ pub enum LogOutput {
 /// Creating a new instance of the Logging struct:
 /// ```
 /// use cli_utils::config::{Logging, LogLevel, LogOutput};
-/// let config = Logging{ enabled: true, level: LogLevel::Info, destination: LogOutput::Stdout };
+/// let mut config = Logging::new();
+/// config.set_enabled(true);
+/// config.set_level(LogLevel::Debug);
+/// config.set_destination(LogOutput::Stderr);
 /// ```
 
 // Making the struct pub isn't enough. You have to expicitly make all fields public
