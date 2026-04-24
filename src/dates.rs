@@ -10,6 +10,10 @@
 //! ```
 use std::fmt;
 
+/// Valid date formats are:
+/// * "US" (MM-DD-YYYY)
+/// * "UK" (DD-MM-YYYY)
+/// * "ISO" (YYYY-MM-DD)
 #[derive(Debug)]
 pub enum DateFormat {
     US,
@@ -138,7 +142,23 @@ impl Date {
         
         Ok(d)
     }
-
+    /// The fields of the `Date` struct are private, so you have to use the `Date::new()` constructor
+    /// along with the values for `day`, `month`, and `year`. This will return a Result, and internal 
+    /// errors should bubble-up to the response.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let date = match Date::new("01", "02", "1972") {
+    ///              Ok(d) => d,
+    ///              Err(e) => eprintln!(e),
+    /// };
+    /// println!("{}", &date);
+    /// ```
+    /// In the example above, "01" is the day, "02" is the month and "1972" is the year. The following
+    /// is the ouput:
+    /// ```
+    /// Date | day: 1, month (#), 02, month (name): February, year: 1972, leap_year: true
+    /// ```
     pub fn new(day: &str, month: &str, year: &str) -> Result<Self, DateError> {
         let day_tmp = match Date::validate_day(day) {
             Ok(d) => d,
@@ -165,10 +185,6 @@ impl Date {
 
         Ok(date)
     }
-
-    // fn set_day(day: &String) {
-
-    // }
 
     fn validate_day(day: &str) -> Result<u8, DateError> {
         let day_int:u8 = match day.parse() {
@@ -223,6 +239,16 @@ impl Date {
         Ok((year_tmp, leap_year))
     }
 
+    /// You can send a year from `1582` to `9999` to see if it is a leap year. This is independent of 
+    /// a `Date` object. To see if the year from a `Date` object is a leap year, use the `get_leap_year` 
+    /// method.
+    /// This returns a `bool`.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let year = 1972;
+    /// println!("Is the year {} a leap year?: {}", year, Date::leap_year(&year));
+    /// ```
     pub fn leap_year(y: &u32) -> bool {
         let mut leap_year = false;
         if y % 4 == 0 {
@@ -246,15 +272,49 @@ impl Date {
         Ok(date_format)
     }
 
+    /// As the fields for the `Date` struct are private, you need to use this method to fetch the `year` 
+    /// field from a `Date` object.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let date = match Date::new("01", "02", "1972") {
+    ///             Ok(d) => d,
+    ///             Err(e) => return eprintln!("{}", e)
+    /// };
+    /// println!("Year: {}", Date::get_year(&date));
+    /// ```
     pub fn get_year(&self) -> u32 {
         self.year
     }
 
+    /// As the fields for the `Date` struct are private, you need to use this method to fetch the `month_num` 
+    /// field from a `Date` object. This field is the month represented as a two-digit number.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let date = match Date::new("01", "02", "1972") {
+    ///             Ok(d) => d,
+    ///             Err(e) => return eprintln!("{}", e)
+    /// };
+    /// println!("Month (#): {}", Date::get_month_n(&date));
+    /// ```
     pub fn get_month_n(&self) -> String {
         let month: String = self.month_num.clone().unwrap();
         month
     }
 
+    /// As the fields for the `Date` struct are private, you need to use this method to fetch the 
+    /// `month_alpha` field from a `Date` object. This field is the month represented as a two-digit 
+    /// number.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let date = match Date::new("01", "02", "1972") {
+    ///             Ok(d) => d,
+    ///             Err(e) => return eprintln!("{}", e)
+    /// };
+    /// println!("Month (name): {}", Date::get_month_a(&date));
+    /// ```
     pub fn get_month_a(&self) -> String {
         let month: String = match &self.month_alpha {
             Some(m) => m.to_string(),
