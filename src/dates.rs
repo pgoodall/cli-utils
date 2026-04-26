@@ -150,13 +150,14 @@ impl Date {
     /// use cli_utils::dates::Date;
     /// let date = match Date::new("01", "02", "1972") {
     ///              Ok(d) => d,
-    ///              Err(e) => eprintln!(e),
+    ///              Err(e) => return eprintln!("{}", e),
     /// };
     /// println!("{}", &date);
     /// ```
     /// In the example above, "01" is the day, "02" is the month and "1972" is the year. The following
-    /// is the ouput:
-    /// ```
+    /// is the output:
+    ///
+    /// ```shell
     /// Date | day: 1, month (#), 02, month (name): February, year: 1972, leap_year: true
     /// ```
     pub fn new(day: &str, month: &str, year: &str) -> Result<Self, DateError> {
@@ -304,8 +305,8 @@ impl Date {
     }
 
     /// As the fields for the `Date` struct are private, you need to use this method to fetch the 
-    /// `month_alpha` field from a `Date` object. This field is the month represented as a two-digit 
-    /// number.
+    /// `month_alpha` field from a `Date` object. This field is the month represented as a name, 
+    /// rather than a number.
     /// # Example:
     /// ```
     /// use cli_utils::dates::Date;
@@ -323,6 +324,18 @@ impl Date {
         month
     }
 
+    /// As the fields for the `Date` struct are private, you need to use this method to fetch the 
+    /// `day` field from a `Date` object. This field is the day represented as a two-digit 
+    /// number.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let date = match Date::new("01", "02", "1972") {
+    ///             Ok(d) => d,
+    ///             Err(e) => return eprintln!("{}", e)
+    /// };
+    /// println!("Day: {}", Date::get_day(&date));
+    /// ```
     pub fn get_day(&self) -> String {
         let mut day: String = String::new();
         if self.day < 10 {
@@ -334,6 +347,18 @@ impl Date {
         day
     }
 
+    /// As the fields for the `Date` struct are private, you need to use this method to fetch the 
+    /// `leap_year` field from a `Date` object. This field shows whether the year defined in this 
+    /// `Date` object is a leap_year or not. Returns a bool.
+    /// # Example:
+    /// ```
+    /// use cli_utils::dates::Date;
+    /// let date = match Date::new("01", "02", "1972") {
+    ///             Ok(d) => d,
+    ///             Err(e) => return eprintln!("{}", e)
+    /// };
+    /// println!("Month (name): {}", Date::get_month_a(&date));
+    /// ```
     pub fn get_leap_year(&self) -> bool {
         self.leap_year
     }

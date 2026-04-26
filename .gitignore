@@ -2,3 +2,4 @@
 /Cargo.lock
 /tests/config-testing.log
 /src/main.rs
+/.vscode
